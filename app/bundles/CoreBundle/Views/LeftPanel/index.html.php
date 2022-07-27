@@ -14,7 +14,7 @@ $extraMenu = $view['menu']->render('extra');
 <div class="sidebar-header">
     <!-- brand -->
     <a class="mautic-brand<?php echo (!empty($extraMenu)) ? ' pull-left pl-0 pr-0' : ''; ?>" href="#">
-    <img src="https://res.cloudinary.com/ackwire/image/upload/v1658946520/AW_Letter_Logo_dxjqy1.svg" style="width:100%; max-width:230px; margin:-65px 0px 0px -10px;" />
+    <img src="https://res.cloudinary.com/ackwire/image/upload/v1658947231/aw_logo_cgvqwy.png" style="width:100%; max-width:230px; margin:-65px 0px 0px -10px;" />
 </a>
     <?php if (!empty($extraMenu)): ?>
         <div class="dropdown extra-menu">
