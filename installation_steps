@@ -1,0 +1,99 @@
+>> https://tutorialsjoint.com/install-mautic/
+
+=========Install Webinoly==============
+
+wget -qO weby qrok.es/wy && sudo bash weby -clean
+sudo stack -lemp -build=light
+sudo stack -letsencrypt
+
+
+
+====Create virtual host for site====
+
+sudo site app.ackwire.io -mysql
+
+
+===Install SSL cert=====
+
+sudo site app.ackwire.io -ssl=on
+
+
+===Login and create DB elements===
+
+mysql -u root -p 
+ 
+CREATE DATABASE ackwiredb;
+CREATE USER 'ackwireuser'@'localhost' IDENTIFIED BY 'copybot';
+GRANT ALL ON ackwiredb.* TO 'ackwireuser'@'localhost' IDENTIFIED BY 'copybot' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+EXIT;
+
+
+===Set permissions===
+
+#add ubuntu to group www-data
+sudo usermod -a -G www-data ubuntu
+
+#check groups of ubuntu, it should show www-data as one of the groups
+id ubuntu
+
+#enter www directory
+cd www
+
+#move to htdocs directory
+cd app.ackwire.io
+
+=========download mautic===========
+git clone https://github.com/writergenie/ackwire.git
+cd ackwire
+git checkout 4.4
+cd ..
+rm -rf htdocs
+mv ackwire/ htdocs 
+
+
+=== Install Composer ===
+cd ~
+curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
+HASH=`curl -sS https://composer.github.io/installer.sig`
+php -r "if (hash_file('SHA384', '/tmp/composer-setup.php') === '$HASH') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+sudo php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+composer
+
+
+====Install mautic=====
+cd www/app.ackwire.in/htdocs
+composer install
+
+
+=======Generate assets and clear mautic cache=========
+sudo -u www-data php console mautic:assets:generate
+sudo -u www-data php console cache:clear
+sudo -u www-data php console cache:warmup
+
+
+
+===========Permissions=============
+
+#Assign file and directory rights to ubuntu for ease of use
+sudo chown -Rf ubuntu:www-data app.ackwire.io
+
+#assign right permissions to ubuntu and group www-data
+sudo chmod -Rf 775 app.ackwire.io
+
+#give proper permissions to files and directories
+****WARNING! -- run the below commands inside the www directory only****
+sudo find . -type d -exec chmod 775 {} \;
+sudo find . -type f -exec chmod 664 {} \;
+
+
+===========Setup cron jobs===========
+
+sudo crontab -u www-data -e
+
+0,10,20,30,40,50 * * * * php /root/www/app.ackwire.io/htdocs/bin/console mautic:segments:update
+5,15,25,35,45,55 * * * * php /root/www/app.ackwire.io/htdocs/bin/console mautic:campaigns:rebuild
+2,12,22,32,42,52 * * * * php /root/www/app.ackwire.io/htdocs/bin/console mautic:campaigns:trigger
+3,13,23,33,43,53 * * * * php /root/www/app.ackwire.io/htdocs/bin/console mautic:email:fetch
+4,14,24,34,44,54 * * * * php /root/www/app.ackwire.io/htdocs/bin/console mautic:import
+0,5,10,15,20,25,30,35,40,45,50,55 * * * * php /root/www/app.ackwire.io/htdocs/bin/console mautic:emails:send
